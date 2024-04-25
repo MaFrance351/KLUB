@@ -12,7 +12,7 @@ uint8_t sz = 0;
 
 const uint8_t ALSNvalues[] = {0x07, 0x00, 0x01, 0x02, 0x03, 0x04};
 
-MCP2515 mcp2515(10);
+MCP2515 mcp2515(3);
 
 
 void setup() {
@@ -20,7 +20,7 @@ void setup() {
   SPI.begin();
 
   mcp2515.reset();
-  mcp2515.setBitrate(CAN_250KBPS);
+  mcp2515.setBitrate(CAN_125KBPS,MCP_8MHZ);
   mcp2515.setNormalMode();
 
   //Serial.println("Example: Write to CAN");
@@ -104,6 +104,39 @@ void showPressure(int tm, int ur) {
   mcp2515.sendMessage(&canMsg1);
 }
 
+void showKR(uint8_t parameter) {
+  struct can_frame canMsg1;
+  canMsg1.can_id  = 1647;
+  canMsg1.can_dlc = 1;
+  canMsg1.data[0] = parameter;
+  mcp2515.sendMessage(&canMsg1);
+}
+
+void showDate(uint16_t year, uint8_t month, uint8_t day, uint8_t h, uint8_t m, uint8_t s) {
+  struct can_frame canMsg1;
+  canMsg1.can_id  = 199;
+  canMsg1.can_dlc = 7;
+  canMsg1.data[0] = (year >> 8) & 0xFF;
+  canMsg1.data[1] = year & 0xFF;
+  canMsg1.data[2] = month;
+  canMsg1.data[3] = day;
+  canMsg1.data[4] = h;
+  canMsg1.data[5] = m;
+  canMsg1.data[6] = s;
+  mcp2515.sendMessage(&canMsg1);
+}
+
+void showCoordinates(uint32_t parameter) {
+  struct can_frame canMsg1;
+  canMsg1.can_id  = 1541;
+  canMsg1.can_dlc = 3;
+  canMsg1.data[0] = (parameter >> 16) & 0xFF;
+  canMsg1.data[1] = (parameter >> 8) & 0xFF;
+  canMsg1.data[2] = parameter & 0xFF;
+  mcp2515.sendMessage(&canMsg1);
+}
+
+
 int8_t processSerial() {
   uint8_t estimated = 0;
   if (sz > 255) sz = 0;
@@ -126,6 +159,10 @@ void loop() {
     memcpy(&currentSpeed, &buffer[index + 6], 2);
     memcpy(&TM, &buffer[index + 31], 2);
     memcpy(&UR, &buffer[index + 33], 2);
+    showDate(2000, 3, 1, buffer[index + 10], buffer[index + 11], buffer[index + 12]);
+    showKR(1);
+    showCoordinates(0);
+    delay(5);
     showParameters(KLUB_ON | 0x01, buffer[index + 0], 120, ALSNvalues[buffer[index + 4]] | (buffer[index + 5] << 4), UR, 0x00, 0);
     showPressure(TM, UR);
     showSpeed(currentSpeed, FORWARD, 0);
