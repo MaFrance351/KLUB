@@ -12,7 +12,7 @@ uint8_t sz = 0;
 
 const uint8_t ALSNvalues[] = {0x07, 0x00, 0x01, 0x02, 0x03, 0x04};
 
-MCP2515 mcp2515(3);
+MCP2515 mcp2515(10);
 
 
 void setup() {
@@ -172,3 +172,4 @@ void loop() {
     showSpeed(currentSpeed, FORWARD, 0);
   }
 }
+
